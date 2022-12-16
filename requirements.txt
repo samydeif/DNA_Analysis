@@ -1,0 +1,6 @@
+numpy==1.23.4
+pandas==1.5.0
+pyopenms @ file:///C:/Users/samy%20deif/OneDrive/Desktop/pyopenms-3.0.0-cp39-cp39-win_amd64.whl
+python-dateutil==2.8.2
+pytz==2022.4
+six==1.16.0
