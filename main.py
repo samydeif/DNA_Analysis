@@ -243,7 +243,7 @@ if DNA_file is not None:
 
         SARS_fasta_file = SeqIO.read(SARS_stringio, 'fasta')
         MERS_fasta_file = SeqIO.read(MERS_stringio, 'fasta')
-        COV2_fasta_file = SeqIO.parse(COV2_stringio, 'fasta')
+        COV2_fasta_file = SeqIO.read(COV2_stringio, 'fasta')
 
         # SARS = SeqIO.read("C:\\Users\\Steven20367691\\Desktop\\sars.fasta", "fasta")
         # MERS = SeqIO.read("C:\\Users\\Steven20367691\\Desktop\\mers.fasta", "fasta")
@@ -251,20 +251,20 @@ if DNA_file is not None:
 
         st.write('Sequence Lengths:')
         st.write('SARS:', len(SARS_fasta_file.seq))
-        st.write('COV2:', len(MERS_fasta_file.seq))
-        st.write('MERS:', len(COV2_fasta_file.seq))
+        st.write('COV2:', len(COV2_fasta_file.seq))
+        st.write('MERS:', len(MERS_fasta_file.seq))
 
         st.write(SARS_fasta_file)
 
         # Alignments using pairwise2 alghoritm
         SARS_Sample = pairwise2.align.globalxx(SARS_fasta_file.seq, DNAsequence.seq, one_alignment_only=True, score_only=True)
-        st.write('SARS/DNAsequence Similarity (%):', SARS_Sample / len(SARS.seq) * 100)
+        st.write('SARS/DNAsequence Similarity (%):', SARS_Sample / len(SARS_fasta_file.seq) * 100)
 
         COV_Sample = pairwise2.align.globalxx(COV2_fasta_file.seq, DNAsequence.seq, one_alignment_only=True, score_only=True)
-        st.write('MERS/DNAsequence Similarity (%):', COV_Sample / len(MERS.seq) * 100)
+        st.write('MERS/DNAsequence Similarity (%):', COV_Sample / len(MERS_fasta_file.seq) * 100)
 
         MERS_SAMPLE = pairwise2.align.globalxx(MERS_fasta_file.seq, DNAsequence.seq, one_alignment_only=True, score_only=True)
-        st.write('MERS/DNAsequence Similarity (%):', MERS_SAMPLE / len(SARS.seq) * 100)
+        st.write('MERS/DNAsequence Similarity (%):', MERS_SAMPLE / len(SARS_fasta_file.seq) * 100)
 
         # Plot the data
         X = ['SARS/COV2', 'MERS/COV2', 'MERS/SARS']
@@ -274,12 +274,6 @@ if DNA_file is not None:
         st.set_option('deprecation.showPyplotGlobalUse', False)
         plt.bar(X, Y)
         st.pyplot()
-
-
-
-
-
-
 
 
 
