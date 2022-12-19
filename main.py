@@ -6,6 +6,9 @@ import os
 from Bio import SeqIO
 import streamlit as st
 from io import StringIO
+from Bio import pairwise2
+from Bio.Data import CodonTable
+
 
 st.title('DNA Analysis')
 uploaded_fasta_file = st.file_uploader('Upload file', type=['fasta', 'fas'])
@@ -149,4 +152,135 @@ if st.button('Align'):
     st.write(align1)
     st.write(align2)
     st.write('score: ', score[len(seq2)][len(seq1)])
+
+st.write('-----------------------------------------------------')
+
+
+DNA_file = st.file_uploader('Upload DNA file', type=['fasta', 'fas', 'fna'])
+
+if DNA_file is not None:
+    DNA_stringio = StringIO(DNA_file.getvalue().decode("utf-8"))
+    DNAsequence = SeqIO.parse(DNA_stringio, "fasta")
+    for record in DNAsequence:
+        Record = record.seq #Convert DNA into mRNA Sequence
+        with st.expander('Show sequence'):
+            st.write(Record)
+        st.write('Size : ', len(Record))
+
+    DNA_stringio = StringIO(DNA_file.getvalue().decode("utf-8"))
+    DNAsequence = SeqIO.read(DNA_stringio, "fasta")
+    st.write(DNAsequence)
+
+    #Convert DNA into mRNA Sequence
+    DNA = DNAsequence.seq
+    mRNA = DNA.transcribe()   #Transcribe a DNA sequence into RNA.
+
+    with st.expander('Show mRNA'):
+        st.write(mRNA)
+
+    st.write('mRNA Length:', len(mRNA))
+
+
+
+    st.subheader('Table of Codons')
+    with st.expander('Show Table'):
+        st.text(CodonTable.unambiguous_rna_by_name['Standard'])
+
+    # Obtain Amino Acid Sequence from mRNA
+    Amino_Acid = mRNA.translate(table=1, cds=False)
+    with st.expander('Show Amino Acid'):
+        st.write('Amino Acid : ', Amino_Acid)
+
+    st.write("Length of Protein : ",len(Amino_Acid))
+    st.write("Length of Original mRNA : ",len(mRNA))
+
+
+    Proteins = Amino_Acid.split('*') # * is translated stop codon
+    for i in Proteins[:]:
+        if len(i) < 20:
+            Proteins.remove(i)
+
+    st.subheader('Proteins that have length more that 20 AA')
+    with st.expander('Show Proteins'):
+        st.write(Proteins)
+
+
+    poi_list = []
+    MW_list = []
+    from Bio.SeqUtils import ProtParam
+    with st.expander('Show Proteins'):
+        for record in Proteins[:]:
+            # print("\n")
+            X = ProtParam.ProteinAnalysis(str(record))
+            POI = X.count_amino_acids()
+            poi_list.append(POI)
+            MW = X.molecular_weight()
+            MW_list.append(MW)
+            st.write("Protein of Interest = ", POI)
+            st.write("Amino acids percent = ", str(X.get_amino_acids_percent()))
+            st.write("Molecular weight = ", MW)
+            st.write("Aromaticity = ", X.aromaticity())
+            st.write("Flexibility = ", X.flexibility())
+            st.write("Isoelectric point = ", X.isoelectric_point())
+            st.write("Secondary structure fraction = ", X.secondary_structure_fraction())
+
+    poi_list = poi_list[48]
+    st.set_option('deprecation.showPyplotGlobalUse', False)
+    plt.bar(poi_list.keys(), list(poi_list.values()), align='center')
+    plt.xlabel('Amino Acids')
+    plt.ylabel('Counts')
+    st.pyplot()
+
+    SARS_file_uploader = st.file_uploader('Upload SARS file', type=['fasta', 'fas'])
+    MERS_file_uploader = st.file_uploader('Upload MERS file', type=['fasta', 'fas'])
+    COV2_file_uploader = st.file_uploader('Upload COV2 file', type=['fasta', 'fas'])
+
+    if SARS_file_uploader is not None and MERS_file_uploader is not None and COV2_file_uploader is not None:
+
+        SARS_stringio = StringIO(SARS_file_uploader.getvalue().decode("utf-8"))
+        MERS_stringio = StringIO(MERS_file_uploader.getvalue().decode("utf-8"))
+        COV2_stringio = StringIO(COV2_file_uploader.getvalue().decode("utf-8"))
+
+        SARS_fasta_file = SeqIO.read(SARS_stringio, 'fasta')
+        MERS_fasta_file = SeqIO.read(MERS_stringio, 'fasta')
+        COV2_fasta_file = SeqIO.parse(COV2_stringio, 'fasta')
+
+        # SARS = SeqIO.read("C:\\Users\\Steven20367691\\Desktop\\sars.fasta", "fasta")
+        # MERS = SeqIO.read("C:\\Users\\Steven20367691\\Desktop\\mers.fasta", "fasta")
+        # COV2 = SeqIO.read("C:\\Users\\Steven20367691\\Desktop\\cov2.fasta", "fasta")
+
+        st.write('Sequence Lengths:')
+        st.write('SARS:', len(SARS_fasta_file.seq))
+        st.write('COV2:', len(MERS_fasta_file.seq))
+        st.write('MERS:', len(COV2_fasta_file.seq))
+
+        st.write(SARS_fasta_file)
+
+        # Alignments using pairwise2 alghoritm
+        SARS_Sample = pairwise2.align.globalxx(SARS_fasta_file.seq, DNAsequence.seq, one_alignment_only=True, score_only=True)
+        st.write('SARS/DNAsequence Similarity (%):', SARS_Sample / len(SARS.seq) * 100)
+
+        COV_Sample = pairwise2.align.globalxx(COV2_fasta_file.seq, DNAsequence.seq, one_alignment_only=True, score_only=True)
+        st.write('MERS/DNAsequence Similarity (%):', COV_Sample / len(MERS.seq) * 100)
+
+        MERS_SAMPLE = pairwise2.align.globalxx(MERS_fasta_file.seq, DNAsequence.seq, one_alignment_only=True, score_only=True)
+        st.write('MERS/DNAsequence Similarity (%):', MERS_SAMPLE / len(SARS.seq) * 100)
+
+        # Plot the data
+        X = ['SARS/COV2', 'MERS/COV2', 'MERS/SARS']
+        Y = [SARS_Sample/ len(SARS_fasta_file.seq) * 100, COV_Sample/ len(MERS_fasta_file.seq)*100, MERS_SAMPLE/len(SARS_fasta_file.seq)*100]
+
+        plt.title('Sequence identity (%)')
+        st.set_option('deprecation.showPyplotGlobalUse', False)
+        plt.bar(X, Y)
+        st.pyplot()
+
+
+
+
+
+
+
+
+
 
