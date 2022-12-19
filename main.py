@@ -274,7 +274,3 @@ if DNA_file is not None:
         st.set_option('deprecation.showPyplotGlobalUse', False)
         plt.bar(X, Y)
         st.pyplot()
-
-
-
-
